@@ -20,28 +20,37 @@ def benchmark():
         'memory_usage': 123
     })
 
-@app.route('/compare', methods=['POST'])
-def compare():
-    model1 = request.files.get('model1')
-    model2 = request.files.get('model2')
-    if not model1 or not model2:
-        return jsonify({'error': 'Both models required'}), 400
+@app.route("/compare", methods=["POST"])
+def compare_models():
+    try:
+        print("COMPARE REQUEST RECEIVED")
+        print("FILES RECEIVED:", request.files)
 
-    # Dummy results
-    return jsonify({
-        'model1': {
-            'model_name': model1.filename,
-            'accuracy': 88.2,
-            'inference_time': 53,
-            'memory_usage': 110
-        },
-        'model2': {
-            'model_name': model2.filename,
-            'accuracy': 91.1,
-            'inference_time': 49,
-            'memory_usage': 130
-        }
-    })
+        file1 = request.files.get("model1")
+        file2 = request.files.get("model2")
+
+        if not file1 or not file2:
+            print("Missing files!")
+            return jsonify({"error": "Both model files are required."}), 400
+
+        result1 = benchmark_model(file1)
+        result2 = benchmark_model(file2)
+
+        print("RESULT 1:", result1)
+        print("RESULT 2:", result2)
+
+        # Save PDF Report
+        save_report(result1, result2)
+
+        return jsonify({
+            "model1": result1,
+            "model2": result2
+        })
+
+    except Exception as e:
+        print("Comparison Error:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/generate-pdf', methods=['POST'])
 def generate_pdf():
